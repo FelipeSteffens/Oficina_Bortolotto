@@ -1,0 +1,24 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { authenticate } = require('./middleware/auth');
+const authRoutes = require('./routes/auth.routes');
+const clientesRoutes = require('./routes/clientes.routes');
+const veiculosRoutes = require('./routes/veiculos.routes');
+const ordensRoutes = require('./routes/ordens-servico.routes');
+const app = express();
+app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173' }));
+app.use(express.json());
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.use('/api/auth', authRoutes);
+app.use('/api/clientes', authenticate, clientesRoutes);
+app.use('/api/veiculos', authenticate, veiculosRoutes);
+app.use('/api/ordens-servico', authenticate, ordensRoutes);
+app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ error: 'Erro interno do servidor.' });
+});
+const port = Number(process.env.PORT || 3001);
+app.listen(port, () => console.log(`API Oficina Bortolotto disponível na porta ${port}`));
